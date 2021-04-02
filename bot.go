@@ -4,6 +4,7 @@ import (
 	"GoBot/commands"
 	"GoBot/commands/handlers/fun"
 	"GoBot/commands/handlers/misc"
+	"GoBot/commands/handlers/moderation/bot"
 	"GoBot/database"
 	"GoBot/events/server"
 	"GoBot/util/cfg"
@@ -65,7 +66,9 @@ func main() {
 
 func registerCommands() commands.CommandManager {
 	manager := commands.NewCommandManager()
-	
+
+	manager.RegisterCommand("clear", bot.Clear)
+
 	manager.RegisterCommand("settings", misc.Settings)
 	manager.RegisterCommand("info", misc.Info)
 	manager.RegisterCommand("help", misc.Help)
