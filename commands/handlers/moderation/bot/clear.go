@@ -4,7 +4,6 @@ import (
 	"GoBot/commands"
 	"GoBot/util"
 	"GoBot/util/embed"
-	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"strconv"
 	"strings"
@@ -15,11 +14,11 @@ import (
 func Clear(ctx *commands.Context) {
 
 	s := ctx.Session
-	m := ctx.Event
+	event := ctx.Event
 
-	message := strings.Split(m.Message.Content, " ")
+	message := strings.Split(event.Message.Content, " ")
 
-	if util.HasPermission(s, m, discordgo.PermissionManageMessages) {
+	if util.HasPermission(s, event, discordgo.PermissionManageMessages) {
 		switch len(message) {
 		case 3:
 			method := message[1]
@@ -38,7 +37,7 @@ func Clear(ctx *commands.Context) {
 					},
 				}
 
-				s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
+				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 			}
 
 			if amount > 100 {
@@ -55,14 +54,14 @@ func Clear(ctx *commands.Context) {
 					},
 				}
 
-				s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
+				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 				return
 			} else {
 				if method == "all" {
-					unconverted, err := s.ChannelMessages(m.ChannelID, amount, "", "", "")
+					unconverted, err := s.ChannelMessages(event.ChannelID, amount, "", "", "")
 
 					if err != nil {
-						s.ChannelMessageSend(m.ChannelID, err.Error())
+						s.ChannelMessageSend(event.ChannelID, err.Error())
 					}
 					converted := make([]string, len(unconverted))
 					for i, m := range unconverted {
@@ -71,75 +70,72 @@ func Clear(ctx *commands.Context) {
 
 					var wg sync.WaitGroup
 					wg.Add(1)
-					go deleteMessages(converted, &wg, s, m)
+					go deleteMessages(converted, &wg, s, event)
 
-					s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) for you.", "", embed.Green, nil))
+					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) for you.", "", embed.Green, nil))
 
-					ch, err := s.Channel(m.ChannelID)
+					ch, err := s.Channel(event.ChannelID)
 					if(err != nil) {
-						s.ChannelMessageSend(m.ChannelID, err.Error())
+						s.ChannelMessageSend(event.ChannelID, err.Error())
 					}
 
 					lastID := ch.LastMessageID
 					time.Sleep(3 * time.Second)
-					s.ChannelMessageDelete(m.ChannelID, lastID)
+					s.ChannelMessageDelete(event.ChannelID, lastID)
 				} else if method == "members" {
-					fmt.Println(amount)
-					unconverted, err := s.ChannelMessages(m.ChannelID, amount, "", "", "")
+					unconverted, err := s.ChannelMessages(event.ChannelID, amount, "", "", "")
 
 					if err != nil {
-						s.ChannelMessageSend(m.ChannelID, err.Error())
+						s.ChannelMessageSend(event.ChannelID, err.Error())
 					}
 					converted := make([]string, len(unconverted))
 					for i, m := range unconverted {
 						if !m.Author.Bot {
-							continue
+							converted[i] = m.ID
 						}
-						converted[i] = m.ID
 					}
 
 					var wg sync.WaitGroup
 					wg.Add(1)
-					go deleteMessages(converted, &wg, s, m)
+					go deleteMessages(converted, &wg, s, event)
 
-					s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) from members.", "", embed.Green, nil))
+					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) for you.", "", embed.Green, nil))
 
-					ch, err := s.Channel(m.ChannelID)
+					ch, err := s.Channel(event.ChannelID)
 					if(err != nil) {
-						s.ChannelMessageSend(m.ChannelID, err.Error())
+						s.ChannelMessageSend(event.ChannelID, err.Error())
 					}
 
 					lastID := ch.LastMessageID
 					time.Sleep(3 * time.Second)
-					s.ChannelMessageDelete(m.ChannelID, lastID)
+					s.ChannelMessageDelete(event.ChannelID, lastID)
 				} else if method == "bots" {
-					unconverted, err := s.ChannelMessages(m.ChannelID, amount, "", "", "")
+					unconverted, err := s.ChannelMessages(event.ChannelID, amount, "", "", "")
 
 					if err != nil {
-						s.ChannelMessageSend(m.ChannelID, err.Error())
+						s.ChannelMessageSend(event.ChannelID, err.Error())
 					}
 					converted := make([]string, len(unconverted))
-					for i, m := range unconverted {
-						if m.Author.Bot {
-							continue
+					for i, msg := range unconverted {
+						if msg.Author.Bot {
+							converted[i] = msg.ID
 						}
-						converted[i] = m.ID
 					}
 
 					var wg sync.WaitGroup
 					wg.Add(1)
-					go deleteMessages(converted, &wg, s, m)
+					go deleteMessages(converted, &wg, s, event)
 
-					s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) from bots.", "", embed.Green, nil))
+					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) from bots.", "", embed.Green, nil))
 
-					ch, err := s.Channel(m.ChannelID)
+					ch, err := s.Channel(event.ChannelID)
 					if(err != nil) {
-						s.ChannelMessageSend(m.ChannelID, err.Error())
+						s.ChannelMessageSend(event.ChannelID, err.Error())
 					}
 
 					lastID := ch.LastMessageID
 					time.Sleep(3 * time.Second)
-					s.ChannelMessageDelete(m.ChannelID, lastID)
+					s.ChannelMessageDelete(event.ChannelID, lastID)
 				}
 			}
 		case 2:
@@ -158,7 +154,7 @@ func Clear(ctx *commands.Context) {
 					},
 				}
 
-				s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
+				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 				return
 			}
 
@@ -176,12 +172,12 @@ func Clear(ctx *commands.Context) {
 					},
 				}
 
-				s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
+				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 			} else {
-				unconverted, err := s.ChannelMessages(m.ChannelID, amount, "", "", "")
+				unconverted, err := s.ChannelMessages(event.ChannelID, amount, "", "", "")
 
 				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, err.Error())
+					s.ChannelMessageSend(event.ChannelID, err.Error())
 				}
 				converted := make([]string, len(unconverted))
 				for i, m := range unconverted {
@@ -190,18 +186,18 @@ func Clear(ctx *commands.Context) {
 
 				var wg sync.WaitGroup
 				wg.Add(1)
-				go deleteMessages(converted, &wg, s, m)
+				go deleteMessages(converted, &wg, s, event)
 
-				s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) for you.", "", embed.Green, nil))
+				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) for you.", "", embed.Green, nil))
 
-				ch, err := s.Channel(m.ChannelID)
+				ch, err := s.Channel(event.ChannelID)
 				if(err != nil) {
-					s.ChannelMessageSend(m.ChannelID, err.Error())
+					s.ChannelMessageSend(event.ChannelID, err.Error())
 				}
 
 				lastID := ch.LastMessageID
 				time.Sleep(3 * time.Second)
-				s.ChannelMessageDelete(m.ChannelID, lastID)
+				s.ChannelMessageDelete(event.ChannelID, lastID)
 			}
 		default:
 			field := []*discordgo.MessageEmbedField{
@@ -217,10 +213,10 @@ func Clear(ctx *commands.Context) {
 				},
 			}
 
-			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
+			s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 		}
 	} else {
-		embed.NoPermsEmbed(s, m, "Manage Messages")
+		embed.NoPermsEmbed(s, event, "Manage Messages")
 	}
 
 }
