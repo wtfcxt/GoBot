@@ -64,22 +64,7 @@ func main() {
 
 func registerCommands() commands.CommandManager {
 	manager := commands.NewCommandManager()
-
-	/*
-	// Fun commands
-	manager.RegisterCommand("zap", fun.CMDzap)
-
-	// Moderation commands
-	manager.RegisterCommand("ban", moderation.CMDban)
-	manager.RegisterCommand("clear", moderation.CMDClear)
-	manager.RegisterCommand("mute", moderation.CMDmute)
-	manager.RegisterCommand("unmute", moderation.CMDunmute)
-
-	// Miscellaneous commands
-	manager.RegisterCommand("help", misc.CMDhelp)
-	manager.RegisterCommand("info", misc.CMDinfo)
-	*/
-
+	
 	manager.RegisterCommand("settings", misc.Settings)
 	manager.RegisterCommand("info", misc.Info)
 	manager.RegisterCommand("help", misc.Help)
