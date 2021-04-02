@@ -4,6 +4,7 @@ import (
 	"GoBot/util/cfg"
 	"GoBot/util/logger"
 	"context"
+	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -107,7 +108,7 @@ func AddMember(client *mongo.Client, user *discordgo.User, guild *discordgo.Guil
 		{"userid", user.ID},
 		{"guildid", guild.ID},
 		{"muted", false},
-		{"warns", map[int]string{1: "none", 2: "none", 3: "none"}},
+		{"warns", []string{}},
 		})
 
 	if err != nil {
@@ -130,7 +131,7 @@ func AddAllMembers(client *mongo.Client, guild *discordgo.Guild) {
 			{"userid", member.User.ID},
 			{"guildid", guild.ID},
 			{"muted", false},
-			{"warns", map[int]string{1: "none", 2: "none", 3: "none"}},
+			{"warns", []string{}},
 		})
 	}
 	res, err := collection.InsertMany(ctx, collections)
@@ -158,6 +159,42 @@ func ChangeGuildSetting(client *mongo.Client, guild *discordgo.Guild, setting st
 	}
 
 	_ = res.ModifiedCount
+}
+
+func AddWarning(client *mongo.Client, guild *discordgo.Guild, user *discordgo.User, reason string) {
+	collection := client.Database("gobot").Collection("members")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.UpdateOne(ctx, bson.D{{"userid", user.ID}, {"guildid", guild.ID}}, bson.D{{"$push", bson.D{{"warns", []string{reason}}}}})
+
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	_ = res.ModifiedCount
+}
+
+func GetWarnings(client *mongo.Client, guild *discordgo.Guild, user *discordgo.User) {
+	collection := client.Database("gobot").Collection("members")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res, err := collection.Find(ctx, bson.D{{"userid", user.ID}, {"guildid", guild.ID}}, options.Find())
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	var warns []string
+
+	err = res.All(ctx, warns)
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	fmt.Println(warns)
+
 }
 
 func GetSetting(client *mongo.Client, setting string) string {
