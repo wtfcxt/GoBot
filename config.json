@@ -1,0 +1,12 @@
+{
+  "database": {
+    "host": "localhost",
+    "password": "none",
+    "port": "27017",
+    "username": "none"
+  },
+  "general": {
+    "prefix": "!",
+    "token": "empty"
+  }
+}
