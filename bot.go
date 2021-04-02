@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoBot/commands"
+	"GoBot/commands/handlers/fun"
 	"GoBot/commands/handlers/misc"
 	"GoBot/database"
 	"GoBot/events/server"
@@ -68,6 +69,8 @@ func registerCommands() commands.CommandManager {
 	manager.RegisterCommand("settings", misc.Settings)
 	manager.RegisterCommand("info", misc.Info)
 	manager.RegisterCommand("help", misc.Help)
+
+	manager.RegisterCommand("meme", fun.MemeCommand)
 
 	logger.LogModule(logger.TypeInfo, "GoBot/Init", "Registered commands.")
 	return manager

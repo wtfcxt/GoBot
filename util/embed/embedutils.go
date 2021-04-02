@@ -28,6 +28,21 @@ func CreateEmbed(title string, description string, thumbnail string, colour int,
 	}
 }
 
+func CreateEmbedImage(title string, description string, image string, colour int) *discordgo.MessageEmbed {
+	footer := discordgo.MessageEmbedFooter{
+		Text: "(c) 2021 - GoBot X | Made by cxt#1234",
+	}
+	img := &discordgo.MessageEmbedImage{URL: image}
+
+	return &discordgo.MessageEmbed{
+		Title:       title,
+		Description: description,
+		Image: 		 img,
+		Color:       colour,
+		Footer:		 &footer,
+	}
+}
+
 func CreateEmbedFieldsOnly(title string, colour int, fields []*discordgo.MessageEmbedField) *discordgo.MessageEmbed {
 	footer := discordgo.MessageEmbedFooter{
 		Text: "(c) 2021 - GoBot X | Made by cxt#1234",
@@ -44,7 +59,7 @@ func ThrowError(error string, s *discordgo.Session, m *discordgo.MessageCreate) 
 	field := []*discordgo.MessageEmbedField{
 		{
 			Name:   "An error occurred.",
-			Value:  "I couldn't perform the action you wanted me to perform.",
+			Value:  "I couldn't perform this action. Please report this error to <@704419523922493542>",
 			Inline: false,
 		},
 		{
@@ -54,7 +69,7 @@ func ThrowError(error string, s *discordgo.Session, m *discordgo.MessageCreate) 
 		},
 	}
 
-	s.ChannelMessageSendEmbed(m.ChannelID, CreateEmbedFieldsOnly("An error occurred.", Red, field))
+	s.ChannelMessageSendEmbed(m.ChannelID, CreateEmbedFieldsOnly("Critical error.", Red, field))
 }
 
 func NoPermsEmbed(s *discordgo.Session, m*discordgo.MessageCreate, perm string) {
