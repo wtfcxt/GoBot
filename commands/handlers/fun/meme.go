@@ -12,8 +12,7 @@ import (
 )
 
 /*
-	https://meme-api.herokuapp.com/gimme
-	title, url
+	This command is using https://meme-api.herokuapp.com/gimme
  */
 
 func MemeCommand(ctx *commands.Context) {
@@ -21,11 +20,11 @@ func MemeCommand(ctx *commands.Context) {
 	s := ctx.Session
 	m := ctx.Event
 
-	s.ChannelTyping(m.ChannelID)
+	err := s.ChannelTyping(m.ChannelID)
 
 	meme := GetMeme(s, m)
 	fmt.Println(extractValue(meme, "url"))
-	_, err := s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbedImage(extractValue(meme, "title"), "I found this on reddit.", extractValue(meme, "url"), embed.Orange))
+	_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbedImage(extractValue(meme, "title"), "I found this on reddit.", extractValue(meme, "url"), embed.Orange))
 	if err != nil {
 		embed.ThrowError(err.Error(), s, m)
 	}

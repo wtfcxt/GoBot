@@ -1,7 +1,9 @@
 package commands
 
 import (
+	new2 "GoBot/database/new"
 	"GoBot/util/cfg"
+	"GoBot/util/embed"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
@@ -42,11 +44,13 @@ func (manager *CommandManager) RegisterCommand(command string, handler func(cont
 
 func (manager *CommandManager) MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
+	guild, _ := s.Guild(m.GuildID)
+
 	input := strings.ToLower(strings.Split(m.Content, " ")[0])
 	var commandImpl Command
 	isCmd := false
 
-	if strings.HasPrefix(input, manager.Prefix) {
+	if strings.HasPrefix(input, new2.GetGuildValue(guild, "prefix")) {
 		for _, v := range manager.Commands {
 			if strings.Contains(strings.ToLower(input), strings.ToLower(v.Command)) {
 				isCmd = true
@@ -61,6 +65,11 @@ func (manager *CommandManager) MessageCreate(s *discordgo.Session, m *discordgo.
 				Label:          input,
 			}
 			commandImpl.CommandHandler(&context)
+		} else {
+			err := s.MessageReactionAdd(m.ChannelID, m.ID, "🚫")
+			if err != nil {
+				embed.ThrowError(err.Error(), s, m)
+			}
 		}
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"GoBot/commands/handlers/moderation/bot"
 	new2 "GoBot/database/new"
 	bot2 "GoBot/events/bot"
-	"GoBot/events/server"
+	"GoBot/events/guild"
 	"GoBot/util/cfg"
 	"GoBot/util/logger"
 	"fmt"
@@ -30,20 +30,11 @@ func main() {
 		logger.LogCrash(err)
 	}
 
-	bot.Identify.Intents =
-			discordgo.IntentsGuildPresences |
-			discordgo.IntentsGuildBans |
-			discordgo.IntentsGuildMessageReactions |
-			discordgo.IntentsGuildMessages |
-			discordgo.IntentsGuildMessageTyping |
-			discordgo.IntentsGuildMembers |
-			discordgo.IntentsGuildMessages |
-			discordgo.IntentsGuilds |
-			discordgo.IntentsGuildVoiceStates
+	bot.Identify.Intents = discordgo.IntentsAll
 
 	bot.AddHandler(manager.MessageCreate)
-	bot.AddHandler(server.GuildAdd)
-	bot.AddHandler(server.GuildRemove)
+	bot.AddHandler(guild.Add)
+	bot.AddHandler(guild.Remove)
 	bot.AddHandler(bot2.ReadyEvent)
 	// bot.AddHandler(events.Ready)
 	// bot.AddHandler(events.GuildJoin)

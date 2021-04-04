@@ -16,7 +16,7 @@ func Help(ctx *commands.Context) {
 		field := []*discordgo.MessageEmbedField{
 			{
 				Name: "Administration",
-				Value: "`!settings` - Change Server-specific Bot Settings",
+				Value: "`!settings` - Change Server-specific Bot Settings\n`!module` - Disable a module (e.g. Moderation Module)",
 				Inline: false,
 			},
 			{
