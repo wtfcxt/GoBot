@@ -15,6 +15,7 @@ func Settings(ctx *commands.Context) {
 	m := ctx.Event
 
 	message := strings.Split(m.Message.Content, " ")
+	guild, _ := s.Guild(m.GuildID)
 
 	if util.HasPermission(s, m, discordgo.PermissionAdministrator) {
 		if len(message) <= 2 {
@@ -26,7 +27,7 @@ func Settings(ctx *commands.Context) {
 				},
 				{
 					Name: "Current values",
-					Value: "Prefix: `" + database.GetSetting(database.GetClient(), "prefix") + "`\nMute-Role: `" + database.GetSetting(database.GetClient(), "muterole") + "`\nWarn-Channel: `" + database.GetSetting(database.GetClient(), "warnch") + "`",
+					Value: "Prefix: `" + database.GetSetting(database.GetClient(), guild, "prefix") + "`\nMute-Role: `" + database.GetSetting(database.GetClient(), guild,"muterole") + "`\nWarn-Channel: `" + database.GetSetting(database.GetClient(), guild, "warnch") + "`",
 					Inline: false,
 				},
 			}

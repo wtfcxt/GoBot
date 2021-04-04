@@ -46,8 +46,6 @@ func GetMeme(s *discordgo.Session, m *discordgo.MessageCreate) string {
 		embed.ThrowError(err.Error(), s, m)
 	}
 
-	fmt.Println(content)
-
 	return string(content)
 }
 

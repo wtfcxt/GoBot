@@ -161,6 +161,35 @@ func ChangeGuildSetting(client *mongo.Client, guild *discordgo.Guild, setting st
 	_ = res.ModifiedCount
 }
 
+func ChangeMemberOption(client *mongo.Client, user *discordgo.User, option string, value string) {
+	collection := client.Database("gobot").Collection("members")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.UpdateOne(ctx, bson.D{{"userid", user.ID}}, bson.D{{"$set", bson.D{{option, value}}}}, options.Update())
+
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	_ = res.ModifiedCount
+}
+
+func ChangeMemberOptionBool(client *mongo.Client, user *discordgo.User, option string, value bool) {
+	collection := client.Database("gobot").Collection("members")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.UpdateOne(ctx, bson.D{{"userid", user.ID}}, bson.D{{"$set", bson.D{{option, value}}}}, options.Update())
+
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	_ = res.ModifiedCount
+}
+
+
 func AddWarning(client *mongo.Client, guild *discordgo.Guild, user *discordgo.User, reason string) {
 	collection := client.Database("gobot").Collection("members")
 
@@ -197,7 +226,7 @@ func GetWarnings(client *mongo.Client, guild *discordgo.Guild, user *discordgo.U
 
 }
 
-func GetSetting(client *mongo.Client, setting string) string {
+func GetSetting(client *mongo.Client,guild *discordgo.Guild, setting string) string {
 
 	var result bson.D
 	collection := client.Database("gobot").Collection("guilds")
@@ -205,12 +234,50 @@ func GetSetting(client *mongo.Client, setting string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := collection.FindOne(ctx, bson.D{}).Decode(&result)
+	err := collection.FindOne(ctx, bson.D{{"id", guild.ID}}).Decode(&result)
 	if err != nil {
 		logger.LogCrash(err)
 	}
 
 	s := result.Map()[setting].(string)
+
+	return s
+
+}
+
+func GetMemberValueString(client *mongo.Client, user *discordgo.User, value string) string {
+
+	var result bson.D
+	collection := client.Database("gobot").Collection("members")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.D{{"userid", user.ID}}).Decode(&result)
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	s := result.Map()[value].(string)
+
+	return s
+
+}
+
+func GetMemberValueBoolean(client *mongo.Client, user *discordgo.User, value string) bool {
+
+	var result bson.D
+	collection := client.Database("gobot").Collection("members")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.D{{"userid", user.ID}}).Decode(&result)
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	s := result.Map()[value].(bool)
 
 	return s
 
