@@ -5,7 +5,7 @@ import (
 	"GoBot/commands/handlers/fun"
 	"GoBot/commands/handlers/misc"
 	"GoBot/commands/handlers/moderation/bot"
-	"GoBot/database"
+	new2 "GoBot/database/new"
 	bot2 "GoBot/events/bot"
 	"GoBot/events/server"
 	"GoBot/util/cfg"
@@ -21,7 +21,8 @@ func main() {
 	logger.LogLogo()
 
 	cfg.LoadConfig()              // Initializing Config
-	database.Connect()                // Initializing Database
+	// database.Connect()                // Initializing Database
+	new2.Connect()
 	manager := registerCommands() // Registering Commands
 
 	bot, err := discordgo.New("Bot " + cfg.Token)
@@ -63,7 +64,8 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
 	bot.Close()
-	database.Disconnect()
+	// database.Disconnect()
+	new2.Disconnect()
 }
 
 func registerCommands() commands.CommandManager {

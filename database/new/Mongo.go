@@ -85,12 +85,13 @@ func DeregisterGuild(guild *discordgo.Guild) {
 /*
 	This function is used for registering a new user that isn't currently in the database.
  */
-func RegisterUser(user *discordgo.User) {
+func RegisterUser(guild *discordgo.Guild, user *discordgo.User) {
 	collection := client.Database("gobot").Collection("users")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, bson.D{{"id", user.ID}, {"guilds", []bson.E{}}})
+	AddGuildToUser(guild, user)
 
 	if err != nil {
 		logger.LogCrash(err)
@@ -112,6 +113,7 @@ func RegisterUserBulk(guild *discordgo.Guild) {
 	for i := range guild.Members {
 		user := guild.Members[i].User
 		collections = append(collections, bson.D{{"id", user.ID}, {"guilds", []bson.E{}}})
+		AddGuildToUser(guild, user)
 	}
 	res, err := collection.InsertMany(ctx, collections)
 
