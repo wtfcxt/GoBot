@@ -17,6 +17,8 @@ func Settings(ctx *commands.Context) {
 	message := strings.Split(m.Message.Content, " ")
 	guild, _ := s.Guild(m.GuildID)
 
+	s.ChannelTyping(m.ChannelID)
+
 	if util.HasPermission(s, m, discordgo.PermissionAdministrator) {
 		if len(message) <= 2 {
 

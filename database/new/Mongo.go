@@ -4,21 +4,24 @@ import (
 	"GoBot/util/cfg"
 	"GoBot/util/logger"
 	"context"
-	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"sync"
 	"time"
 )
 
 var client *mongo.Client
+var wg2 sync.WaitGroup
 
 /*
 	This function is used for connecting to the database.
  */
 func Connect() {
+
+	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Trying to connect to MongoDB...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -38,6 +41,8 @@ func Connect() {
 	This function is used for disconnecting from the database.
  */
 func Disconnect() {
+	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Trying to disconnect from MongoDB...")
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := client.Disconnect(ctx)
@@ -52,7 +57,11 @@ func Disconnect() {
 /*
 	This function is used for registering a new guild.
  */
-func RegisterGuild(guild *discordgo.Guild) {
+func RegisterGuild(guild *discordgo.Guild, session *discordgo.Session, wg *sync.WaitGroup) {
+
+	defer wg.Done()
+
+	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Trying to register the current guild...")
 	collection := client.Database("gobot").Collection("guilds")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -65,88 +74,18 @@ func RegisterGuild(guild *discordgo.Guild) {
 
 	_ = res.InsertedID
 
-	RegisterUserBulk(guild)
-}
-
-/*
-	This function is used for registering a new user that isn't currently in the database.
- */
-func RegisterUser(guild *discordgo.Guild, user *discordgo.User) {
-	collection := client.Database("gobot").Collection("users")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	res, err := collection.InsertOne(ctx, bson.D{{"user_id", user.ID}, {"guilds", []bson.D{{}}}})
-	AddGuildToUser(guild, user)
-
-	if err != nil {
-		logger.LogCrash(err)
-	}
-
-	_ = res.InsertedID
-}
-
-/*
-	This function is for registering many new users which currently are not in the database.
- */
-func RegisterUserBulk(guild *discordgo.Guild) {
-	collection := client.Database("gobot").Collection("members")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Inserted Guild into MongoDB.")
 
 	var collections []interface{}
+
 	for i := range guild.Members {
 		user := guild.Members[i].User
-		if !UserExists(user) {
-			collections = append(collections, bson.D{{"user_id", user.ID}, {"guilds", []bson.D{{}}}})
+		if !UserExists(user, guild) && user != session.State.User {
+			collections = append(collections, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", bson.D{}}})
 		}
 	}
+	CreateManyUsers(collections)
 
-	if collections != nil {
-		res, err := collection.InsertMany(ctx, collections)
-		if err != nil {
-			logger.LogCrash(err)
-		}
-
-		_ = res.InsertedIDs
-
-		for i := range guild.Members {
-			user := guild.Members[i].User
-			AddGuildToUser(guild, user)
-		}
-	} else {
-		for i := range guild.Members {
-			user := guild.Members[i].User
-			if !IsUserInGuild(guild, user) {
-				fmt.Println("should add rn")
-				AddGuildToUser(guild, user)
-			}
-		}
-	}
- }
-
-/*
-	This function is used for registering a guild in a user's document.
- */
-func AddGuildToUser(guild *discordgo.Guild, user *discordgo.User) {
-	collection := client.Database("gobot").Collection("members")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	res, err := collection.UpdateOne(ctx,
-		bson.D{{"id", user.ID}},
-		bson.D{{"$push",bson.D{{"guilds", bson.D{
-			{"guild", guild.ID},
-			{"muted", false},
-			{"warns", []bson.D{{}}}}}}}})
-
-	if err != nil {
-		logger.LogCrash(err)
-	}
-
-	_ = res.ModifiedCount
 }
 
 func GuildExists(guild *discordgo.Guild) bool {
@@ -173,23 +112,19 @@ func GuildExists(guild *discordgo.Guild) bool {
 
 }
 
-func UserExists(user *discordgo.User) bool {
-	collection := client.Database("gobot").Collection("members")
+func UserExists(user *discordgo.User, guild *discordgo.Guild) bool {
+	var result bson.D
+
+	collection := client.Database("gobot").Collection("users")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := collection.Find(ctx, bson.D{{"user_id", user.ID}})
-
+	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, options.FindOne()).Decode(&result)
 	if err != nil {
-		logger.LogCrash(err)
+		return false
 	}
 
-	var episodes []bson.D
-	if err = res.All(ctx, &episodes); err != nil {
-		logger.LogCrash(err)
-	}
-
-	if len(episodes) == 0 {
+	if result == nil {
 		return false
 	} else {
 		return true
@@ -211,39 +146,6 @@ func ChangeGuildValue(guild *discordgo.Guild, option string, value string) {
 	_ = res.ModifiedCount
 }
 
-func ChangeUserValue(user *discordgo.User, option string, value string) {
-	collection := client.Database("gobot").Collection("members")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	res, err := collection.UpdateOne(ctx, bson.D{{"id", user.ID}}, bson.D{{"$set", bson.D{{"guilds." + option, value}}}}, options.Update())
-
-	if err != nil {
-		logger.LogCrash(err)
-	}
-
-	_ = res.ModifiedCount
-}
-
-/*func GetUserValueString(user *discordgo.User, option string) string {
-
-}*/
-
-/*func GetUserValueBool(user *discordgo.User, option string) bool {
-	var result bson.D
-	collection := client.Database("gobot").Collection("members")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}}).Decode(&result)
-	if err != nil {
-		logger.LogCrash(err)
-	}
-
-	s := result.Map()["guilds"].(bson.D).Map()[""]
-}*/
-
 func GetGuildValue(guild *discordgo.Guild, option string) string {
 	var result bson.D
 
@@ -257,48 +159,129 @@ func GetGuildValue(guild *discordgo.Guild, option string) string {
 		logger.LogCrash(err)
 	}
 
-	// fmt.Println(result.Map()["settings"].(bson.D).Map()[option].(string))
 	s := result.Map()["settings"].(bson.D).Map()[option].(string)
 
 	return s
 }
 
-func IsUserInGuild(guild *discordgo.Guild, user *discordgo.User) bool {
+/*
+	User Part
+ */
 
-	/* TODO: Abfrage ob Nutzer in der Gilde ist
-	    -> wenn der Nutzer bereits die Gilde in seinem Profil hat, returnen
-	    -> wenn der Nutzer nicht in der derzeitigen Gilde ist, fortfahren
-	*/
-
-	var result bson.D
-
-	collection := client.Database("gobot").Collection("members")
+func ChangeUserValueString(user *discordgo.User, guild *discordgo.Guild, option string, value string) {
+	collection := client.Database("gobot").Collection("users")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$set", bson.D{{option, value}}}}, options.Update())
 
-	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}}).Decode(&result)
 	if err != nil {
 		logger.LogCrash(err)
 	}
 
-	s := result.Map()["guilds"].(bson.A)
-	var found bool = false
-	if s == nil {
-		found = false
-		fmt.Println("skipped")
-		goto skip
-	}
-	for i := range s {
-		i2 := s[i]
-		fmt.Println(i2)
-		if i2 == guild.ID {
-			found = true
-		}
+	_ = res.ModifiedCount
+}
+
+func ChangeUserValueBool(user *discordgo.User, guild *discordgo.Guild, option string, value bool) {
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$set", bson.D{{option, value}}}}, options.Update())
+
+	if err != nil {
+		logger.LogCrash(err)
 	}
 
-	skip:
-	fmt.Println(found)
-	return found
+	_ = res.ModifiedCount
+}
 
+func CreateUser(user *discordgo.User, guild *discordgo.Guild) {
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.InsertOne(ctx, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", bson.D{}}})
+
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	_ = res.InsertedID
+}
+
+func CreateManyUsers(users []interface{}) {
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.InsertMany(ctx, users, options.InsertMany())
+
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	_ = res.InsertedIDs
+}
+
+func GetUserValueString(user *discordgo.User, guild *discordgo.Guild, option string) string {
+	var result bson.D
+
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}).Decode(&result)
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	s := result.Map()[option].(string)
+
+	return s
+}
+
+func GetUserValueBool(user *discordgo.User, guild *discordgo.Guild, option string) bool {
+	var result bson.D
+
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}).Decode(&result)
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	s := result.Map()[option].(bool)
+
+	return s
+}
+
+func AddWarning(user *discordgo.User, guild *discordgo.Guild, reason string) {
+
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$push", bson.D{{"warns", bson.E{"$id", reason}}}}})
+
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	_ = res.MatchedCount
+
+}
+
+func RemoveWarning(user *discordgo.User, guild *discordgo.Guild, id string) {
+
+}
+func GetWarnings(user *discordgo.User) bson.D {
+
+
+
+	return nil
 }

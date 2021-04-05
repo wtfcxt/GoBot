@@ -17,6 +17,7 @@ func Clear(ctx *commands.Context) {
 	event := ctx.Event
 
 	message := strings.Split(event.Message.Content, " ")
+	s.ChannelTyping(event.ChannelID)
 
 	if util.HasPermission(s, event, discordgo.PermissionManageMessages) {
 		switch len(message) {

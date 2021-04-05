@@ -63,8 +63,9 @@ func registerCommands() commands.CommandManager {
 	manager := commands.NewCommandManager()
 
 	manager.RegisterCommand("clear", bot.Clear)
-	manager.RegisterCommand("warns", bot.Warnings)
+	manager.RegisterCommand("warn", bot.Warn)
 	manager.RegisterCommand("mute", bot.Mute)
+	manager.RegisterCommand("unmute", bot.Unmute)
 
 	manager.RegisterCommand("settings", misc.Settings)
 	manager.RegisterCommand("info", misc.Info)
