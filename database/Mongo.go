@@ -1,4 +1,4 @@
-package new
+package database
 
 import (
 	"GoBot/util/cfg"
@@ -25,16 +25,30 @@ func Connect() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	clients, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://" + cfg.Host + ":" + cfg.Port))
 
-	err := clients.Ping(ctx, readpref.Primary())
-	if err != nil {
-		logger.LogCrash(err)
+
+
+	if cfg.Username == "none" && cfg.Password == "none"  {
+		clients, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://" + cfg.Host + ":" + cfg.Port))
+		err := clients.Ping(ctx, readpref.Primary())
+		if err != nil {
+			logger.LogCrash(err)
+		}
+
+		logger.LogModule(logger.TypeInfo, "GoBot/Init", "Connected to database. [MongoDB]")
+
+		client = clients
+	} else {
+		clients, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://" + cfg.Username + ":" + cfg.Password + "@" + cfg.Host + ":" + cfg.Port + "?authSource=admin"))
+		err := clients.Ping(ctx, readpref.Primary())
+		if err != nil {
+			logger.LogCrash(err)
+		}
+
+		logger.LogModule(logger.TypeInfo, "GoBot/Init", "Connected to database. [MongoDB]")
+
+		client = clients
 	}
-
-	logger.LogModule(logger.TypeInfo, "GoBot/Init", "Connected to database. [MongoDB]")
-
-	client = clients
 }
 
 /*
@@ -81,7 +95,7 @@ func RegisterGuild(guild *discordgo.Guild, session *discordgo.Session, wg *sync.
 	for i := range guild.Members {
 		user := guild.Members[i].User
 		if !UserExists(user, guild) && user != session.State.User {
-			collections = append(collections, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", bson.D{}}})
+			collections = append(collections, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", []string{""}}})
 		}
 	}
 	CreateManyUsers(collections)
@@ -201,7 +215,7 @@ func CreateUser(user *discordgo.User, guild *discordgo.Guild) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := collection.InsertOne(ctx, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", bson.D{}}})
+	res, err := collection.InsertOne(ctx, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", []string{}}})
 
 	if err != nil {
 		logger.LogCrash(err)
@@ -242,6 +256,24 @@ func GetUserValueString(user *discordgo.User, guild *discordgo.Guild, option str
 	return s
 }
 
+func GetUserValueJson(user *discordgo.User, guild *discordgo.Guild, option string) bson.D {
+	var result bson.D
+
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}).Decode(&result)
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	s := result.Map()[option].(bson.D)
+
+	return s
+}
+
 func GetUserValueBool(user *discordgo.User, guild *discordgo.Guild, option string) bool {
 	var result bson.D
 
@@ -266,7 +298,8 @@ func AddWarning(user *discordgo.User, guild *discordgo.Guild, reason string) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$push", bson.D{{"warns", bson.E{"$id", reason}}}}})
+
+	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$push", bson.D{{"warns", reason}}}}, options.Update())
 
 	if err != nil {
 		logger.LogCrash(err)
@@ -279,9 +312,23 @@ func AddWarning(user *discordgo.User, guild *discordgo.Guild, reason string) {
 func RemoveWarning(user *discordgo.User, guild *discordgo.Guild, id string) {
 
 }
-func GetWarnings(user *discordgo.User) bson.D {
 
+func GetWarnings(user *discordgo.User, guild *discordgo.Guild) bson.A {
 
+	var result bson.D
 
-	return nil
+	collection := client.Database("gobot").Collection("users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, options.FindOne()).Decode(&result)
+	if err != nil {
+		logger.LogCrash(err)
+	}
+
+	s := result.Map()["warns"].(bson.A)
+
+	return s
+
 }

@@ -2,6 +2,7 @@ package bot
 
 import (
 	"GoBot/commands"
+	"GoBot/database"
 	"GoBot/util"
 	"GoBot/util/embed"
 	"github.com/bwmarrin/discordgo"
@@ -17,6 +18,14 @@ func Clear(ctx *commands.Context) {
 	event := ctx.Event
 
 	message := strings.Split(event.Message.Content, " ")
+
+	guild, err := s.Guild(event.GuildID)
+	if err != nil {
+		embed.ThrowError(err.Error(), s, event)
+	}
+
+	prefix := database.GetGuildValue(guild, "prefix")
+
 	s.ChannelTyping(event.ChannelID)
 
 	if util.HasPermission(s, event, discordgo.PermissionManageMessages) {
@@ -32,7 +41,7 @@ func Clear(ctx *commands.Context) {
 					},
 					{
 						Name: 	"Correct syntax",
-						Value:	"`!clear <amount>` - Clears the specified amount of messages in the current channel",
+						Value:	"`" + prefix + "clear <amount>` - Clears the specified amount of messages in the current channel",
 						Inline: false,
 					},
 				}
@@ -71,7 +80,20 @@ func Clear(ctx *commands.Context) {
 				wg.Add(1)
 				go deleteMessages(converted, &wg, s, event)
 
-				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Deleted " + strconv.Itoa(amount) + " message(s).", "I successfully deleted **" + strconv.Itoa(amount) + "** message(s) for you.", "", embed.Green, nil))
+				field := []*discordgo.MessageEmbedField{
+					{
+						Name:   "Amount of Messages",
+						Value:  "`" + strconv.Itoa(amount) + "`",
+						Inline: true,
+					},
+					{
+						Name:   "Moderator",
+						Value:  "<@" + event.Author.ID + ">",
+						Inline: true,
+					},
+				}
+
+				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Cleared " + strconv.Itoa(amount) + " messages", "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/msgbubble_green.png", embed.Green, field))
 
 				ch, err := s.Channel(event.ChannelID)
 				if err != nil {
@@ -91,7 +113,7 @@ func Clear(ctx *commands.Context) {
 				},
 				{
 					Name: 	"Correct syntax",
-					Value:	"`!clear <amount>` - Clears the specified amount of messages in the current channel",
+					Value:	"`" + prefix + "clear <amount>` - Clears the specified amount of messages in the current channel",
 					Inline: false,
 				},
 			}

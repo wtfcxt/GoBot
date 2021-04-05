@@ -1,7 +1,7 @@
 package commands
 
 import (
-	new2 "GoBot/database/new"
+	"GoBot/database"
 	"GoBot/util/cfg"
 	"GoBot/util/embed"
 	"github.com/bwmarrin/discordgo"
@@ -50,7 +50,7 @@ func (manager *CommandManager) MessageCreate(s *discordgo.Session, m *discordgo.
 	var commandImpl Command
 	isCmd := false
 
-	if strings.HasPrefix(input, new2.GetGuildValue(guild, "prefix")) {
+	if strings.HasPrefix(input, database.GetGuildValue(guild, "prefix")) {
 		for _, v := range manager.Commands {
 			if strings.Contains(strings.ToLower(input), strings.ToLower(v.Command)) {
 				isCmd = true

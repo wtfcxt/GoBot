@@ -2,7 +2,7 @@ package misc
 
 import (
 	"GoBot/commands"
-	new2 "GoBot/database/new"
+	"GoBot/database"
 	"GoBot/util"
 	"GoBot/util/embed"
 	"github.com/bwmarrin/discordgo"
@@ -15,15 +15,21 @@ func Settings(ctx *commands.Context) {
 	m := ctx.Event
 
 	message := strings.Split(m.Message.Content, " ")
-	guild, _ := s.Guild(m.GuildID)
+
+	guild, err := s.Guild(m.GuildID)
+	if err != nil {
+		embed.ThrowError(err.Error(), s, m)
+	}
+
+	prefix := database.GetGuildValue(guild, "prefix")
 
 	s.ChannelTyping(m.ChannelID)
 
 	if util.HasPermission(s, m, discordgo.PermissionAdministrator) {
 		if len(message) <= 2 {
 
-			muterole := new2.GetGuildValue(guild,"mute_role_id")
-			warnchannel := new2.GetGuildValue(guild, "warn_channel_id")
+			muterole := database.GetGuildValue(guild,"mute_role_id")
+			warnchannel := database.GetGuildValue(guild, "warn_channel_id")
 
 			if muterole == "none" {
 				muterole = "**Not set**"
@@ -39,12 +45,12 @@ func Settings(ctx *commands.Context) {
 			field := []*discordgo.MessageEmbedField{
 				{
 					Name: "Settings",
-					Value: "`!settings prefix <Prefix>` - Change the bot's prefix\n`!settings muterole <Role-Mention>` - Change the mute role\n`!settings warnchannel <Channel>` - If set, the bot will announce Warns in that channel.",
+					Value: "`" + prefix + "settings prefix <Prefix>` - Change the bot's prefix\n`" + prefix + "settings muterole <Role-Mention>` - Change the mute role\n`" + prefix + "settings warnchannel <Channel>` - If set, the bot will announce Warns in that channel.",
 					Inline: false,
 				},
 				{
 					Name: "Current values",
-					Value: "Prefix: `" + new2.GetGuildValue(guild, "prefix") + "`\nMute-Role: " + muterole + "\nWarn-Channel: " + warnchannel,
+					Value: "Prefix: `" + database.GetGuildValue(guild, "prefix") + "`\nMute-Role: " + muterole + "\nWarn-Channel: " + warnchannel,
 					Inline: false,
 				},
 			}
@@ -61,13 +67,13 @@ func Settings(ctx *commands.Context) {
 			switch setting {
 			case "prefix":
 				SettingsChangedEmbed(s, m, "Prefix", value)
-				new2.ChangeGuildValue(guild, "prefix", value)
+				database.ChangeGuildValue(guild, "prefix", value)
 			case "muterole":
 				SettingsChangedEmbed(s, m, "Mute Role", value)
-				new2.ChangeGuildValue(guild, "mute_role_id", strings.Replace(strings.Replace(value, ">", "", 1), "<@&", "", 1))
+				database.ChangeGuildValue(guild, "mute_role_id", strings.Replace(strings.Replace(value, ">", "", 1), "<@&", "", 1))
 			case "warnchannel":
 				SettingsChangedEmbed(s, m, "Warn Channel", value)
-				new2.ChangeGuildValue(guild, "warn_channel_id", strings.Replace(strings.Replace(value, ">", "", 1), "<#", "", 1))
+				database.ChangeGuildValue(guild, "warn_channel_id", strings.Replace(strings.Replace(value, ">", "", 1), "<#", "", 1))
 			default:
 				field := []*discordgo.MessageEmbedField{
 					{

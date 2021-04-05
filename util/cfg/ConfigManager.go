@@ -8,7 +8,7 @@ import (
 
 func LoadConfig() {
 
-	viper.SetDefault("general", map[string]string{"token": "empty", "prefix": "!"})
+	viper.SetDefault("general", map[string]string{"token": "empty", "prefix": "!", "debug": "disabled"})
 	viper.SetDefault("database", map[string]string{"host": "localhost", "port": "27017", "username": "none", "password": "none"})
 
 	viper.SetConfigName("config")
@@ -28,6 +28,7 @@ func LoadConfig() {
 
 	Token = general["token"].(string)
 	Prefix = general["prefix"].(string)
+	Debug = general["debug"].(string)
 
 	Host = database["host"].(string)
 	Port = database["port"].(string)

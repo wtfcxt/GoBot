@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"GoBot/util/cfg"
 	"fmt"
 	"github.com/fatih/color"
 )
@@ -30,7 +31,9 @@ func LogModule(logtype int, module string, str string) {
 	case TypeError:
 		fmt.Fprintln(color.Output, color.RedString("[ERROR] <" + module + "> " + color.HiWhiteString(str)))
 	case TypeDebug:
-		fmt.Fprintln(color.Output, color.HiMagentaString("[DEBUG] <" + module + "> " + color.HiWhiteString(str)))
+		if cfg.Debug != "disabled" {
+			fmt.Fprintln(color.Output, color.HiMagentaString("[DEBUG] <" + module + "> " + color.HiWhiteString(str)))
+		}
 	default:
 		fmt.Fprintln(color.Output, color.RedString("[ERROR] <GoLog> " + color.HiWhiteString("Invalid LoggerType. Original message: " + str)))
 	}

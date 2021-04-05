@@ -2,7 +2,7 @@ package bot
 
 import (
 	"GoBot/commands"
-	new2 "GoBot/database/new"
+	"GoBot/database"
 	"GoBot/util"
 	"GoBot/util/embed"
 	"github.com/bwmarrin/discordgo"
@@ -14,7 +14,12 @@ func Warn(ctx *commands.Context) {
 	event := ctx.Event
 
 	message := strings.Split(event.Message.Content, " ")
-	guild, _ := s.Guild(event.GuildID)
+	guild, err := s.Guild(event.GuildID)
+	if err != nil {
+		embed.ThrowError(err.Error(), s, event)
+	}
+
+	prefix := database.GetGuildValue(guild, "prefix")
 
 	s.ChannelTyping(event.ChannelID)
 
@@ -31,7 +36,7 @@ func Warn(ctx *commands.Context) {
 						},
 						{
 							Name:   "Correct syntax",
-							Value:  "`!warn <user> [reason]` - Warns a user",
+							Value:  "`" + prefix + "warn <user> [reason]` - Warns a user",
 							Inline: false,
 						},
 					}
@@ -39,7 +44,7 @@ func Warn(ctx *commands.Context) {
 					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 					return
 				} else {
-						new2.AddWarning(user, guild, reason)
+						database.AddWarning(user, guild, reason)
 
 						field := []*discordgo.MessageEmbedField{
 							{
@@ -57,17 +62,17 @@ func Warn(ctx *commands.Context) {
 						s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("Warned " + user.Username, embed.Green, field))
 				}
 			} else if len(message) == 2 {
-				member := event.Mentions[0]
-				if member == nil {
+				user := event.Mentions[0]
+				if user == nil {
 					field := []*discordgo.MessageEmbedField{
 						{
-							Name:   "No member supplied.",
+							Name:   "No user supplied.",
 							Value:  "You didn't supply a user.",
 							Inline: false,
 						},
 						{
 							Name:   "Correct syntax",
-							Value:  "`!warn <user> [reason]` - Warns a user",
+							Value:  "`" + prefix + "warn <user> [reason]` - Warns a user",
 							Inline: false,
 						},
 					}
@@ -75,12 +80,12 @@ func Warn(ctx *commands.Context) {
 					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 					return
 				} else {
-					new2.AddWarning(member, guild, "None")
+					database.AddWarning(user, guild, "None")
 
 					field := []*discordgo.MessageEmbedField{
 						{
 							Name:   "User",
-							Value:  "<@" + member.ID + ">.",
+							Value:  "<@" + user.ID + ">",
 							Inline: true,
 						},
 						{
@@ -90,7 +95,7 @@ func Warn(ctx *commands.Context) {
 						},
 					}
 
-					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("Warned " + member.Username, embed.Green, field))
+					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Warned: " + user.Username, "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))
 				}
 			} else {
 				field := []*discordgo.MessageEmbedField{
@@ -101,7 +106,7 @@ func Warn(ctx *commands.Context) {
 					},
 					{
 						Name:   "Correct syntax",
-						Value:  "`!warn <User>` - Warns a user",
+						Value:  "`" + prefix + "warn <User>` - Warns a user",
 						Inline: false,
 					},
 				}

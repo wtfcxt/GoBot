@@ -6,3 +6,4 @@ var Host string
 var Port string
 var Username string
 var Password string
+var Debug string

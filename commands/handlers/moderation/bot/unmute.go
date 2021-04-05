@@ -2,7 +2,7 @@ package bot
 
 import (
 	"GoBot/commands"
-	new2 "GoBot/database/new"
+	"GoBot/database"
 	"GoBot/util"
 	"GoBot/util/embed"
 	"github.com/bwmarrin/discordgo"
@@ -15,12 +15,17 @@ func Unmute(ctx *commands.Context) {
 	event := ctx.Event
 
 	message := strings.Split(event.Message.Content, " ")
-	guild, _ := s.Guild(event.GuildID)
+	guild, err := s.Guild(event.GuildID)
+	if err != nil {
+		embed.ThrowError(err.Error(), s, event)
+	}
+
+	prefix := database.GetGuildValue(guild, "prefix")
 
 	s.ChannelTyping(event.ChannelID)
 
 	if util.HasPermission(s, event, discordgo.PermissionManageMessages) {
-		if new2.GetGuildValue(guild, "mute_role_id") != "none" {
+		if database.GetGuildValue(guild, "mute_role_id") != "none" {
 			if len(message) >= 2 {
 				user := event.Mentions[0]
 				if user == nil {
@@ -40,8 +45,8 @@ func Unmute(ctx *commands.Context) {
 					s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 					return
 				} else {
-					if new2.GetUserValueBool(user, guild, "muted") {
-						err := s.GuildMemberRoleRemove(event.GuildID, user.ID, new2.GetGuildValue(guild, "mute_role_id"))
+					if database.GetUserValueBool(user, guild, "muted") {
+						err := s.GuildMemberRoleRemove(event.GuildID, user.ID, database.GetGuildValue(guild, "mute_role_id"))
 						if err != nil {
 							field := []*discordgo.MessageEmbedField{
 								{
@@ -53,7 +58,7 @@ func Unmute(ctx *commands.Context) {
 
 							s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("An error occurred.", embed.Red, field))
 						}
-						new2.ChangeUserValueBool(user, guild, "muted", false)
+						database.ChangeUserValueBool(user, guild, "muted", false)
 
 						field := []*discordgo.MessageEmbedField{
 							{
@@ -68,7 +73,7 @@ func Unmute(ctx *commands.Context) {
 							},
 						}
 
-						s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbedFieldsOnly("Action successful.", embed.Green, field))
+						s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Unmuted: " + user.Username, "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))
 					} else {
 						field := []*discordgo.MessageEmbedField{
 							{
@@ -95,7 +100,7 @@ func Unmute(ctx *commands.Context) {
 					},
 					{
 						Name:   "Correct syntax",
-						Value:  "`!mute <user>` - Unmutes a user",
+						Value:  "`" + prefix + "mute <user>` - Unmutes a user",
 						Inline: false,
 					},
 				}
@@ -112,7 +117,7 @@ func Unmute(ctx *commands.Context) {
 				},
 				{
 					Name:   "How to fix?",
-					Value:  "`!settings muterole <Ping Mute Role>` - Sets the mute role",
+					Value:  "`" + prefix + "settings muterole <Ping Mute Role>` - Sets the mute role",
 					Inline: false,
 				},
 			}

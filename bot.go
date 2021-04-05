@@ -5,7 +5,7 @@ import (
 	"GoBot/commands/handlers/fun"
 	"GoBot/commands/handlers/misc"
 	"GoBot/commands/handlers/moderation/bot"
-	new2 "GoBot/database/new"
+	"GoBot/database"
 	bot2 "GoBot/events/bot"
 	"GoBot/events/guild"
 	"GoBot/util/cfg"
@@ -21,8 +21,7 @@ func main() {
 	logger.LogLogo()
 
 	cfg.LoadConfig()              // Initializing Config
-	// database.Connect()                // Initializing Database
-	new2.Connect()
+	database.Connect()            // Initializing Database
 	manager := registerCommands() // Registering Commands
 
 	bot, err := discordgo.New("Bot " + cfg.Token)
@@ -34,8 +33,8 @@ func main() {
 
 	bot.AddHandler(manager.MessageCreate)
 	bot.AddHandler(guild.Add)
-	bot.AddHandler(guild.Remove)
 	bot.AddHandler(bot2.ReadyEvent)
+	bot.AddHandler(guild.UserJoin)
 	// bot.AddHandler(events.Ready)
 	// bot.AddHandler(events.GuildJoin)
 
@@ -56,7 +55,7 @@ func main() {
 	<-sc
 	bot.Close()
 	// database.Disconnect()
-	new2.Disconnect()
+	database.Disconnect()
 }
 
 func registerCommands() commands.CommandManager {
@@ -64,6 +63,7 @@ func registerCommands() commands.CommandManager {
 
 	manager.RegisterCommand("clear", bot.Clear)
 	manager.RegisterCommand("warn", bot.Warn)
+	manager.RegisterCommand("warns", bot.Warnings)
 	manager.RegisterCommand("mute", bot.Mute)
 	manager.RegisterCommand("unmute", bot.Unmute)
 

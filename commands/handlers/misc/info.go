@@ -11,6 +11,8 @@ func Info(ctx *commands.Context) {
 	s := ctx.Session
 	m := ctx.Event
 
+	s.ChannelTyping(m.ChannelID)
+
 	field := []*discordgo.MessageEmbedField{
 		{
 			Name: "Developer",
@@ -19,7 +21,7 @@ func Info(ctx *commands.Context) {
 		},
 		{
 			Name: "Version",
-			Value: "Running `GoBot X` -> Branch `Dev`",
+			Value: "Running `GoBot X` | Branch `Dev`",
 			Inline: false,
 		},
 	}
