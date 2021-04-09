@@ -78,7 +78,8 @@ func Mute(ctx *commands.Context) {
 							},
 						}
 
-						s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Muted: " + user.Username, "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))					} else {
+						s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Muted: "+user.Username, "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))
+					} else {
 						field := []*discordgo.MessageEmbedField{
 							{
 								Name:   "User is already muted.",

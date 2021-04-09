@@ -25,23 +25,23 @@ func Help(ctx *commands.Context) {
 	if util.HasPermission(s, m, discordgo.PermissionAdministrator) {
 		field := []*discordgo.MessageEmbedField{
 			{
-				Name: "Admin",
-				Value: "`" + prefix + "settings` `" + prefix + "module`",
+				Name:   "Admin",
+				Value:  "`" + prefix + "settings` `" + prefix + "module`",
 				Inline: false,
 			},
 			{
-				Name: "Mod",
-				Value: "`" + prefix + "clear` `" + prefix + "mute` `" + prefix + "unmute` `" + prefix + "warn` `" + prefix + "ban` `" + prefix + "kick`",
+				Name:   "Mod",
+				Value:  "`" + prefix + "clear` `" + prefix + "mute` `" + prefix + "unmute` `" + prefix + "warn` `" + prefix + "ban` `" + prefix + "kick`",
 				Inline: false,
 			},
 			{
-				Name: "Fun",
-				Value: "`" + prefix + "meme` `" + prefix + "zap`",
+				Name:   "Fun",
+				Value:  "`" + prefix + "meme` `" + prefix + "zap` `" + prefix + "bite` `" + prefix + "hack` `" + prefix + "hug` `" + prefix + "ping` `" + prefix + "say` `" + prefix + "arguments`",
 				Inline: false,
 			},
 			{
-				Name: "Misc",
-				Value: "`" + prefix + "help` `" + prefix + "info`",
+				Name:   "Misc",
+				Value:  "`" + prefix + "help` `" + prefix + "info`",
 				Inline: false,
 			},
 		}
@@ -50,18 +50,18 @@ func Help(ctx *commands.Context) {
 	} else if util.HasPermission(s, m, discordgo.PermissionManageMessages) {
 		field := []*discordgo.MessageEmbedField{
 			{
-				Name: "Moderation",
-				Value: "`" + prefix + "clear` `" + prefix + "mute <Member> [Reason]` `" + prefix + "unmute` `" + prefix + "warn` `" + prefix + "ban` `" + prefix + "kick`",
+				Name:   "Moderation",
+				Value:  "`" + prefix + "clear` `" + prefix + "mute <Member> [Reason]` `" + prefix + "unmute` `" + prefix + "warn` `" + prefix + "ban` `" + prefix + "kick`",
 				Inline: false,
 			},
 			{
-				Name: "Fun",
-				Value: "`" + prefix + "meme` `" + prefix + "zap`",
+				Name:   "Fun",
+				Value:  "`" + prefix + "meme` `" + prefix + "zap` `" + prefix + "bite` `" + prefix + "hack` `" + prefix + "hug` `" + prefix + "ping` `" + prefix + "say`",
 				Inline: false,
 			},
 			{
-				Name: "Misc",
-				Value: "`" + prefix + "help` `" + prefix + "info`",
+				Name:   "Misc",
+				Value:  "`" + prefix + "help` `" + prefix + "info`",
 				Inline: false,
 			},
 		}
@@ -70,13 +70,13 @@ func Help(ctx *commands.Context) {
 	} else {
 		field := []*discordgo.MessageEmbedField{
 			{
-				Name: "Fun",
-				Value: "`" + prefix + "meme` `" + prefix + "zap`",
+				Name:   "Fun",
+				Value:  "`" + prefix + "meme` `" + prefix + "zap` `" + prefix + "bite` `" + prefix + "hack` `" + prefix + "hug` `" + prefix + "ping` `" + prefix + "say`",
 				Inline: false,
 			},
 			{
-				Name: "Misc",
-				Value: "`" + prefix + "help` `" + prefix + "info`",
+				Name:   "Misc",
+				Value:  "`" + prefix + "help` `" + prefix + "info`",
 				Inline: false,
 			},
 		}

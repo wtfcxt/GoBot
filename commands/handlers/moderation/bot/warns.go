@@ -30,7 +30,7 @@ func Warnings(ctx *commands.Context) {
 		output := database.GetWarnings(target, guild)
 		sorted := make(map[int]interface{})
 
-		field := []*discordgo.MessageEmbedField {
+		field := []*discordgo.MessageEmbedField{
 			{
 				Name:   strconv.Itoa(len(sorted)) + " warning(s).",
 				Value:  "<@" + target.ID + "> currently has " + strconv.Itoa(len(sorted)) + "warn(s).",
@@ -44,7 +44,7 @@ func Warnings(ctx *commands.Context) {
 			} else {
 				sorted[i] = output[i]
 
-				appendField := discordgo.MessageEmbedField {
+				appendField := discordgo.MessageEmbedField{
 					Name:   "Warning #" + strconv.Itoa(i),
 					Value:  fmt.Sprint(output[i]),
 					Inline: true,
@@ -54,7 +54,7 @@ func Warnings(ctx *commands.Context) {
 		}
 
 		if len(sorted) == 0 {
-			field := []*discordgo.MessageEmbedField {
+			field := []*discordgo.MessageEmbedField{
 				{
 					Name:   "0 warning(s).",
 					Value:  "Woah! This user is clean. _Are you?_",
@@ -62,10 +62,10 @@ func Warnings(ctx *commands.Context) {
 				},
 			}
 
-			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(target.Username + "'s warnings", "This command will show their warnings. _if they have any..._", "", embed.Orange, field))
+			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(target.Username+"'s warnings", "This command will show their warnings. _if they have any..._", "", embed.Orange, field))
 			return
 		} else {
-			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(target.Username + "'s warnings", "This command will show their warnings.", "", embed.Orange, field))
+			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(target.Username+"'s warnings", "This command will show their warnings.", "", embed.Orange, field))
 		}
 	} else {
 		s.ChannelTyping(m.ChannelID)
@@ -87,7 +87,7 @@ func Warnings(ctx *commands.Context) {
 			} else {
 				sorted[i] = output[i]
 
-				appendField := discordgo.MessageEmbedField {
+				appendField := discordgo.MessageEmbedField{
 					Name:   "Warning #" + strconv.Itoa(i),
 					Value:  fmt.Sprint(output[i]),
 					Inline: true,
@@ -97,7 +97,7 @@ func Warnings(ctx *commands.Context) {
 		}
 
 		if len(sorted) == 0 {
-			field := []*discordgo.MessageEmbedField {
+			field := []*discordgo.MessageEmbedField{
 				{
 					Name:   "0 warning(s).",
 					Value:  "Woah! You are clean. Keep up the good work.",
@@ -105,10 +105,10 @@ func Warnings(ctx *commands.Context) {
 				},
 			}
 
-			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(m.Author.Username + "'s warnings", "This command will show your warnings. _if you have any..._", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))
+			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(m.Author.Username+"'s warnings", "This command will show your warnings. _if you have any..._", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))
 			return
 		} else {
-			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(m.Author.Username + "'s warnings", "This command will show your warnings.", "https://files.cxt.wtf/GoBot/hammer_red.png", embed.Red, field))
+			s.ChannelMessageSendEmbed(m.ChannelID, embed.CreateEmbed(m.Author.Username+"'s warnings", "This command will show your warnings.", "https://files.cxt.wtf/GoBot/hammer_red.png", embed.Red, field))
 		}
 	}
 

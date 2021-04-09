@@ -2,32 +2,32 @@ package commands
 
 import (
 	"GoBot/database"
-	"GoBot/util/cfg"
+	"GoBot/util"
 	"GoBot/util/embed"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
 
 type Command struct {
-	Command			string
-	CommandHandler	func(context *Context)
+	Command        string
+	CommandHandler func(context *Context)
 }
 
 type Context struct {
-	Implementation 	*Command
-	Event 			*discordgo.MessageCreate
-	Session 		*discordgo.Session
-	Label 			string
+	Implementation *Command
+	Event          *discordgo.MessageCreate
+	Session        *discordgo.Session
+	Label          string
 }
 
 type CommandManager struct {
-	Prefix			string
-	Commands		[]Command
+	Prefix   string
+	Commands []Command
 }
 
 func NewCommandManager() CommandManager {
 	return CommandManager{
-		Prefix: cfg.Prefix,
+		Prefix:   util.Prefix,
 		Commands: []Command{},
 	}
 }
@@ -60,11 +60,11 @@ func (manager *CommandManager) MessageCreate(s *discordgo.Session, m *discordgo.
 		if isCmd == true {
 			context := Context{
 				Implementation: &commandImpl,
-				Event:			m,
-				Session:		s,
+				Event:          m,
+				Session:        s,
 				Label:          input,
 			}
-			commandImpl.CommandHandler(&context)
+			go commandImpl.CommandHandler(&context)
 		} else {
 			err := s.MessageReactionAdd(m.ChannelID, m.ID, "🚫")
 			if err != nil {

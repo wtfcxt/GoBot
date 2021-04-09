@@ -40,8 +40,8 @@ func Clear(ctx *commands.Context) {
 						Inline: false,
 					},
 					{
-						Name: 	"Correct syntax",
-						Value:	"`" + prefix + "clear <amount>` - Clears the specified amount of messages in the current channel",
+						Name:   "Correct syntax",
+						Value:  "`" + prefix + "clear <amount>` - Clears the specified amount of messages in the current channel",
 						Inline: false,
 					},
 				}
@@ -58,8 +58,8 @@ func Clear(ctx *commands.Context) {
 						Inline: false,
 					},
 					{
-						Name: 	"Why?",
-						Value:	"This is a discord limitation.",
+						Name:   "Why?",
+						Value:  "This is a discord limitation.",
 						Inline: false,
 					},
 				}
@@ -93,7 +93,7 @@ func Clear(ctx *commands.Context) {
 					},
 				}
 
-				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Cleared " + strconv.Itoa(amount) + " messages", "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/msgbubble_green.png", embed.Green, field))
+				s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Cleared "+strconv.Itoa(amount)+" messages", "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/msgbubble_green.png", embed.Green, field))
 
 				ch, err := s.Channel(event.ChannelID)
 				if err != nil {
@@ -112,8 +112,8 @@ func Clear(ctx *commands.Context) {
 					Inline: false,
 				},
 				{
-					Name: 	"Correct syntax",
-					Value:	"`" + prefix + "clear <amount>` - Clears the specified amount of messages in the current channel",
+					Name:   "Correct syntax",
+					Value:  "`" + prefix + "clear <amount>` - Clears the specified amount of messages in the current channel",
 					Inline: false,
 				},
 			}

@@ -67,13 +67,13 @@ func Unmute(ctx *commands.Context) {
 								Inline: true,
 							},
 							{
-								Name:	"Moderator",
-								Value:	"<@" + event.Author.ID + ">",
+								Name:   "Moderator",
+								Value:  "<@" + event.Author.ID + ">",
 								Inline: true,
 							},
 						}
 
-						s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Unmuted: " + user.Username, "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))
+						s.ChannelMessageSendEmbed(event.ChannelID, embed.CreateEmbed("Unmuted: "+user.Username, "This action has been performed successfully.", "https://files.cxt.wtf/GoBot/hammer_green.png", embed.Green, field))
 					} else {
 						field := []*discordgo.MessageEmbedField{
 							{

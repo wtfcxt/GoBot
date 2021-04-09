@@ -1,8 +1,7 @@
 package database
 
 import (
-	"GoBot/util/cfg"
-	"GoBot/util/logger"
+	"GoBot/util"
 	"context"
 	"github.com/bwmarrin/discordgo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,34 +17,30 @@ var wg2 sync.WaitGroup
 
 /*
 	This function is used for connecting to the database.
- */
+*/
 func Connect() {
-
-	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Trying to connect to MongoDB...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-
-
-	if cfg.Username == "none" && cfg.Password == "none"  {
-		clients, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://" + cfg.Host + ":" + cfg.Port))
+	if util.Username == "none" && util.Password == "none" {
+		clients, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+util.Host+":"+util.Port))
 		err := clients.Ping(ctx, readpref.Primary())
 		if err != nil {
-			logger.LogCrash(err)
+			util.LogCrash(err)
 		}
 
-		logger.LogModule(logger.TypeInfo, "GoBot/Init", "Connected to database. [MongoDB]")
+		util.LogModule(util.TypeInfo, "GoBot/Database", "Connected to database. [MongoDB]")
 
 		client = clients
 	} else {
-		clients, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://" + cfg.Username + ":" + cfg.Password + "@" + cfg.Host + ":" + cfg.Port + "?authSource=admin"))
+		clients, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+util.Username+":"+util.Password+"@"+util.Host+":"+util.Port+"?authSource=admin"))
 		err := clients.Ping(ctx, readpref.Primary())
 		if err != nil {
-			logger.LogCrash(err)
+			util.LogCrash(err)
 		}
 
-		logger.LogModule(logger.TypeInfo, "GoBot/Init", "Connected to database. [MongoDB]")
+		util.LogModule(util.TypeInfo, "GoBot/Database", "Connected to database. [MongoDB]")
 
 		client = clients
 	}
@@ -53,9 +48,8 @@ func Connect() {
 
 /*
 	This function is used for disconnecting from the database.
- */
+*/
 func Disconnect() {
-	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Trying to disconnect from MongoDB...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -65,37 +59,37 @@ func Disconnect() {
 		panic(err)
 	}
 
-	logger.LogModule(logger.TypeInfo, "GoBot/Mongo", "Database Connection closed. [MongoDB]")
+	util.LogModule(util.TypeInfo, "GoBot/Mongo", "Database Connection closed. [MongoDB]")
 }
 
 /*
 	This function is used for registering a new guild.
- */
+*/
 func RegisterGuild(guild *discordgo.Guild, session *discordgo.Session, wg *sync.WaitGroup) {
 
 	defer wg.Done()
 
-	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Trying to register the current guild...")
+	util.LogModule(util.TypeDebug, "GoBot/Debug", "Trying to register the current guild...")
 	collection := client.Database("gobot").Collection("guilds")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := collection.InsertOne(ctx, bson.D{{"guild_id", guild.ID}, {"settings", map[string]string{"prefix": "!", "warn_channel_id": "none", "mute_role_id": "none"}}})
+	res, err := collection.InsertOne(ctx, bson.D{{"guild_id", guild.ID}, {"settings", map[string]string{"prefix": "!", "warn_channel_id": "none", "mute_role_id": "none"}}, {"logger", map[string]string{"enabled": "no", "channel": "none", "messages": "no", "joins": "no", "leaves": "no", "role": "none", "punishments": "no"}}})
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	_ = res.InsertedID
 
-	logger.LogModule(logger.TypeDebug, "GoBot/Debug", "Inserted Guild into MongoDB.")
+	util.LogModule(util.TypeDebug, "GoBot/Debug", "Inserted Guild into MongoDB.")
 
 	var collections []interface{}
 
 	for i := range guild.Members {
 		user := guild.Members[i].User
 		if !UserExists(user, guild) && user != session.State.User {
-			collections = append(collections, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", []string{""}}})
+			collections = append(collections, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}, {"muted", false}, {"warns", []string{""}}})
 		}
 	}
 	CreateManyUsers(collections)
@@ -110,12 +104,12 @@ func GuildExists(guild *discordgo.Guild) bool {
 	res, err := collection.Find(ctx, bson.D{{"guild_id", guild.ID}})
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	var episodes []bson.D
 	if err = res.All(ctx, &episodes); err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	if len(episodes) == 0 {
@@ -154,7 +148,7 @@ func ChangeGuildValue(guild *discordgo.Guild, option string, value string) {
 	res, err := collection.UpdateOne(ctx, bson.D{{"guild_id", guild.ID}}, bson.D{{"$set", bson.D{{"settings." + option, value}}}}, options.Update())
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	_ = res.ModifiedCount
@@ -170,7 +164,7 @@ func GetGuildValue(guild *discordgo.Guild, option string) string {
 
 	err := collection.FindOne(ctx, bson.D{{"guild_id", guild.ID}}).Decode(&result)
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	s := result.Map()["settings"].(bson.D).Map()[option].(string)
@@ -178,9 +172,41 @@ func GetGuildValue(guild *discordgo.Guild, option string) string {
 	return s
 }
 
+func GetGuildLoggerValue(guild *discordgo.Guild, option string) string {
+	var result bson.D
+
+	collection := client.Database("gobot").Collection("guilds")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := collection.FindOne(ctx, bson.D{{"guild_id", guild.ID}}).Decode(&result)
+	if err != nil {
+		util.LogCrash(err)
+	}
+
+	s := result.Map()["logger"].(bson.D).Map()[option].(string)
+
+	return s
+}
+
+func ChangeGuildLoggerValue(guild *discordgo.Guild, option string, value string) {
+	collection := client.Database("gobot").Collection("guilds")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.UpdateOne(ctx, bson.D{{"guild_id", guild.ID}}, bson.D{{"$set", bson.D{{"logger." + option, value}}}}, options.Update())
+
+	if err != nil {
+		util.LogCrash(err)
+	}
+
+	_ = res.ModifiedCount
+}
+
 /*
 	User Part
- */
+*/
 
 func ChangeUserValueString(user *discordgo.User, guild *discordgo.Guild, option string, value string) {
 	collection := client.Database("gobot").Collection("users")
@@ -190,7 +216,7 @@ func ChangeUserValueString(user *discordgo.User, guild *discordgo.Guild, option 
 	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$set", bson.D{{option, value}}}}, options.Update())
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	_ = res.ModifiedCount
@@ -204,7 +230,7 @@ func ChangeUserValueBool(user *discordgo.User, guild *discordgo.Guild, option st
 	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$set", bson.D{{option, value}}}}, options.Update())
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	_ = res.ModifiedCount
@@ -215,10 +241,10 @@ func CreateUser(user *discordgo.User, guild *discordgo.Guild) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := collection.InsertOne(ctx, bson.D{{"user_id", user.ID},{"guild_id", guild.ID}, {"muted", false}, {"warns", []string{}}})
+	res, err := collection.InsertOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}, {"muted", false}, {"warns", []string{}}})
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	_ = res.InsertedID
@@ -229,13 +255,11 @@ func CreateManyUsers(users []interface{}) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	res, err := collection.InsertMany(ctx, users, options.InsertMany())
+	_, err := collection.InsertMany(ctx, users, options.InsertMany())
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogModule(util.TypeWarn, "GoBot/Database", "A non-critical MongoDB error occurred: " + err.Error())
 	}
-
-	_ = res.InsertedIDs
 }
 
 func GetUserValueString(user *discordgo.User, guild *discordgo.Guild, option string) string {
@@ -248,7 +272,7 @@ func GetUserValueString(user *discordgo.User, guild *discordgo.Guild, option str
 
 	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}).Decode(&result)
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	s := result.Map()[option].(string)
@@ -266,7 +290,7 @@ func GetUserValueJson(user *discordgo.User, guild *discordgo.Guild, option strin
 
 	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}).Decode(&result)
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	s := result.Map()[option].(bson.D)
@@ -284,7 +308,7 @@ func GetUserValueBool(user *discordgo.User, guild *discordgo.Guild, option strin
 
 	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}).Decode(&result)
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	s := result.Map()[option].(bool)
@@ -302,7 +326,7 @@ func AddWarning(user *discordgo.User, guild *discordgo.Guild, reason string) {
 	res, err := collection.UpdateOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, bson.D{{"$push", bson.D{{"warns", reason}}}}, options.Update())
 
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	_ = res.MatchedCount
@@ -324,7 +348,7 @@ func GetWarnings(user *discordgo.User, guild *discordgo.Guild) bson.A {
 
 	err := collection.FindOne(ctx, bson.D{{"user_id", user.ID}, {"guild_id", guild.ID}}, options.FindOne()).Decode(&result)
 	if err != nil {
-		logger.LogCrash(err)
+		util.LogCrash(err)
 	}
 
 	s := result.Map()["warns"].(bson.A)

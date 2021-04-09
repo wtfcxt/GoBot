@@ -15,13 +15,13 @@ func Info(ctx *commands.Context) {
 
 	field := []*discordgo.MessageEmbedField{
 		{
-			Name: "Developer",
-			Value: "`cxt#1234` made this awesome bot!",
+			Name:   "Version",
+			Value:  "Running `GoBot X` | Branch `Dev`",
 			Inline: false,
 		},
 		{
-			Name: "Version",
-			Value: "Running `GoBot X` | Branch `Dev`",
+			Name:   "Contributors",
+			Value:  "<@704419523922493542> - Main developer\n<@813305613671989259> - Some ideas",
 			Inline: false,
 		},
 	}
