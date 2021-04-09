@@ -11,9 +11,5 @@ func HasPermission(s *discordgo.Session, m *discordgo.MessageCreate, permission 
 		fmt.Println(err.Error())
 	}
 
-	if p&permission == permission {
-		return true
-	} else {
-		return false
-	}
+	return p&permission == permission
 }

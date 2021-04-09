@@ -3,8 +3,8 @@ package embed
 import "github.com/bwmarrin/discordgo"
 
 var (
-	Red = 16711685
-	Green = 3657238
+	Red    = 16711685
+	Green  = 3657238
 	Yellow = 14735630
 	Orange = 13929741
 )
@@ -24,7 +24,7 @@ func CreateEmbed(title string, description string, thumbnail string, colour int,
 		Color:       colour,
 		Thumbnail:   &embedThumbnail,
 		Fields:      fields,
-		Footer:		 &footer,
+		Footer:      &footer,
 	}
 }
 
@@ -37,9 +37,9 @@ func CreateEmbedImage(title string, description string, image string, colour int
 	return &discordgo.MessageEmbed{
 		Title:       title,
 		Description: description,
-		Image: 		 img,
+		Image:       img,
 		Color:       colour,
-		Footer:		 &footer,
+		Footer:      &footer,
 	}
 }
 
@@ -48,10 +48,10 @@ func CreateEmbedFieldsOnly(title string, colour int, fields []*discordgo.Message
 		Text: "(c) 2021 - GoBot X | Made by cxt#1234",
 	}
 	return &discordgo.MessageEmbed{
-		Title:       title,
-		Color:       colour,
-		Fields:      fields,
-		Footer:		 &footer,
+		Title:  title,
+		Color:  colour,
+		Fields: fields,
+		Footer: &footer,
 	}
 }
 
@@ -63,8 +63,8 @@ func ThrowError(error string, s *discordgo.Session, m *discordgo.MessageCreate) 
 			Inline: false,
 		},
 		{
-			Name: 	"Error",
-			Value:	"`" + error + "`",
+			Name:   "Error",
+			Value:  "`" + error + "`",
 			Inline: false,
 		},
 	}
@@ -72,7 +72,7 @@ func ThrowError(error string, s *discordgo.Session, m *discordgo.MessageCreate) 
 	s.ChannelMessageSendEmbed(m.ChannelID, CreateEmbedFieldsOnly("Critical error.", Red, field))
 }
 
-func NoPermsEmbed(s *discordgo.Session, m*discordgo.MessageCreate, perm string) {
+func NoPermsEmbed(s *discordgo.Session, m *discordgo.MessageCreate, perm string) {
 	field := []*discordgo.MessageEmbedField{
 		{
 			Name:   "No permissions.",
@@ -80,8 +80,8 @@ func NoPermsEmbed(s *discordgo.Session, m*discordgo.MessageCreate, perm string) 
 			Inline: false,
 		},
 		{
-			Name: 	"Permission needed",
-			Value:	"`" + perm + "`",
+			Name:   "Permission needed",
+			Value:  "`" + perm + "`",
 			Inline: false,
 		},
 	}
