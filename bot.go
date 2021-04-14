@@ -1,116 +1,69 @@
 package main
 
 import (
-	"GoBot/commands"
-	"GoBot/commands/handlers/admin"
-	"GoBot/commands/handlers/fun"
-	"GoBot/commands/handlers/misc"
-	"GoBot/commands/handlers/moderation/bot"
-	"GoBot/commands/handlers/moderation/server"
-	"GoBot/database"
-	bot2 "GoBot/events/bot"
-	"GoBot/events/guild"
-	"GoBot/util"
-	"fmt"
-	"github.com/bwmarrin/discordgo"
+	"GoBot-Recode/logger"
+	"GoBot-Recode/web"
 	"os"
 	"os/signal"
-	"runtime"
-	"strconv"
+	"path/filepath"
+	"sync"
 	"syscall"
 )
 
+var wg sync.WaitGroup
+
 func main() {
-	util.LogLogo()
 
-	util.LoadConfig()              // Initializing Config
+	wg.Add(1)
+	must(WriteFiles(&wg))
+	wg.Wait()
 
-	if util.Debug {
-		util.LogModule(util.TypeWarn, "GoBot/Debug", "############################################################")
-		util.LogModule(util.TypeWarn, "GoBot/Debug", "The bot is running in debug mode. DO NOT USE IN PRODUCTION!")
-		util.LogModule(util.TypeWarn, "GoBot/Debug", "############################################################")
+	go web.CreateServer("127.0.0.1", "8080", false)
+	if !web.Server.TLS {
+		logger.LogModule(logger.TypeWarn, "GoBot/Web", "This server is not running in TLS mode. Please don't use it in production.")
 	}
-
-	runtime.GOMAXPROCS(int(util.MaxThreads))
-	util.LogModule(util.TypeInfo, "GoBot/Runtime", "Limiting Maximum CPU Threads to " + strconv.Itoa(int(util.MaxThreads)) + "...")
-	database.Connect()            // Initializing Database
-	manager := registerCommands() // Registering Commands
-
-	bot, err := discordgo.New("Bot " + util.Token) // Creating the bot
-	if err != nil {
-		util.LogCrash(err)
-	}
-
-	bot.Identify.Intents = discordgo.IntentsAll // This makes the bot use all Intents. (discord.com/developers)
-
-	bot.AddHandler(manager.MessageCreate) // When a command has been executed, this event is called
-	bot.AddHandler(guild.Add)             // When the bot registers a new guild, this event is called
-	bot.AddHandler(bot2.ReadyEvent)       // When the bot is ready, this event is called
-	bot.AddHandler(guild.UserJoin)        // When a new user joins, this event is called
-	bot.AddHandler(bot2.AddReaction)	  // When a user adds a reaction to a message
-
-	// If the token in the configuration file is empty, won't continue.
-	if util.Token == "empty" {
-		util.LogModule(util.TypeError, "GoBot/Bot", "You didn't enter a token. Can't continue.")
-		os.Exit(1)
-	}
-
-	// If an error occurs whilst trying to open the bot, it will crash.
-	err = bot.Open()
-	if err != nil {
-		util.LogCrash(err)
-	}
-
-	fmt.Print("\n")
-	util.LogModule(util.TypeInfo, "GoBot/Bot", "Bot running. (Quit using Ctrl + C)") // The bot is now running.
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
-	bot.Close()           // Closing the bot's connection
-	fmt.Println("\n")
-	util.LogModule(util.TypeInfo, "GoBot/Bot", "Shutting down Bot...")
-	database.Disconnect() // Disconnecting from Database
 }
 
-func registerCommands() commands.CommandManager {
-	manager := commands.NewCommandManager()
+func WriteFiles(wg *sync.WaitGroup) {
 
-	/*
-		Admin commands
-	*/
+	defer wg.Done()
 
-	manager.RegisterCommand("settings", admin.Settings)
+	runDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 
-	/*
-		Moderation commands
-	*/
+	if _, err := os.Stat("/html/"); err == nil {
+	} else if os.IsNotExist(err) {
+		os.MkdirAll(runDir + "/html/", os.ModePerm)
+	} else {
+		logger.LogModule(logger.TypeError, "GoBot/Web", "Unable to check if file exists or does not exist. Panic!")
+		logger.LogCrash(err)
+	}
 
-	manager.RegisterCommand("clear", bot.Clear)
-	manager.RegisterCommand("warn", bot.Warn)
-	manager.RegisterCommand("warns", bot.Warnings)
-	manager.RegisterCommand("mute", bot.Mute)
-	manager.RegisterCommand("unmute", bot.Unmute)
+	if _, err := os.Stat("/tls/"); err == nil {
+	} else if os.IsNotExist(err) {
+		os.MkdirAll(runDir + "/tls/", os.ModePerm)
+	} else {
+		logger.LogModule(logger.TypeError, "GoBot/Web", "Unable to check if file exists or does not exist. Panic!")
+		logger.LogCrash(err)
+	}
 
-	manager.RegisterCommand("kick", server.Kick)
-	manager.RegisterCommand("ban", server.Ban)
+	if _, err := os.Stat("/config/"); err == nil {
+	} else if os.IsNotExist(err) {
+		os.MkdirAll(runDir + "/config/", os.ModePerm)
+	} else {
+		logger.LogModule(logger.TypeError, "GoBot/Web", "Unable to check if file exists or does not exist. Panic!")
+		logger.LogCrash(err)
+	}
 
-	/*
-		Miscellaneous commands
-	*/
+	if _, err := os.Stat("/html/index.html"); err == nil {
+	} else if os.IsNotExist(err) {
+		example := []byte("<h1>Webserver running.</h1>")
+		os.WriteFile(runDir + "/html/index.html", example, os.ModePerm)
+	} else {
+		logger.LogModule(logger.TypeError, "GoBot/Web", "Unable to check if file exists or does not exist. Panic!")
+		logger.LogCrash(err)
+	}
 
-	manager.RegisterCommand("info", misc.Info)
-	manager.RegisterCommand("help", misc.Help)
-
-	/*
-		Fun commands
-	*/
-
-	manager.RegisterCommand("meme", fun.MemeCommand)
-	manager.RegisterCommand("nsfw", fun.NSFWCommand)
-	manager.RegisterCommand("arguments", fun.ArgumentCommand)
-	manager.RegisterCommand("hack", fun.Hack)
-	manager.RegisterCommand("hentai", fun.HentaiCommand)
-
-	util.LogModule(util.TypeInfo, "GoBot/Commands", "Registered commands.")
-	return manager
 }
