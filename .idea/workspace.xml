@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="206331a1-68d3-4fd8-b954-bb40b78522b3" name="Default Changelist" comment="" />
+    <list default="true" id="206331a1-68d3-4fd8-b954-bb40b78522b3" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/config/viper.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/data/Static.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/logger/GoLog.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/web/backend/auth/flow/callback.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/web/backend/auth/flow/login.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/web/backend/auth/state.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/web/backend/files.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/web/backend/guilds/guild.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/web/backend/guilds/settings/settings.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/core/web/web.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/database/cache/cache.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/database/mongo/mongo.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bot.go" beforeDir="false" afterPath="$PROJECT_DIR$/bot.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logger/GoLog.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/core/web/backend/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/templates.go" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -15,12 +38,27 @@
     </option>
   </component>
   <component name="GOROOT" url="file://$USER_HOME$/sdk/go1.16.2" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
   <component name="ProjectId" id="1r51dGMWOWxsCAmLcbtcSSiBNOC" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="DefaultGoTemplateProperty" value="Go File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
@@ -29,6 +67,15 @@
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
     <property name="last_opened_file_path" value="$USER_HOME$" />
     <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\cxt\go\src\GoBot\core\web\backend\auth\flow" />
+      <recent name="C:\Users\cxt\go\src\GoBot\core\web\backend\guilds" />
+      <recent name="C:\Users\cxt\go\src\GoBot\core\web\frontend" />
+      <recent name="C:\Users\cxt\go\src\GoBot\core\web\backend" />
+      <recent name="C:\Users\cxt\go\src\GoBot\database\mongo" />
+    </key>
   </component>
   <component name="RunManager">
     <configuration name="go build GoBot-Recode" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">

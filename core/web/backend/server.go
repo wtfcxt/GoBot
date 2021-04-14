@@ -1,7 +1,9 @@
-package web
+package backend
 
 import (
-	"GoBot-Recode/logger"
+	"GoBot-Recode/core/logger"
+	"GoBot-Recode/core/web/backend/auth/flow"
+	"fmt"
 	"net/http"
 	"os"
 )
@@ -10,6 +12,7 @@ type WebServer struct {
 	Address string
 	Port    string
 	TLS     bool
+	ServeMux *http.ServeMux
 }
 
 var Server WebServer
@@ -22,34 +25,33 @@ func CreateServer(Address string, Port string, TLS bool) WebServer {
 		os.Exit(1)
 	}
 
-	if TLS {
-		mux := http.NewServeMux()
+	fs := http.FileServer(http.Dir("html/assets"))
 
-		mux.HandleFunc("/", handler)
+	mux := http.NewServeMux()
+	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
+	mux.HandleFunc("/", handler)
+	mux.HandleFunc("/auth/login", flow.LoginHandler)
+	mux.HandleFunc("/auth/callback", flow.CallbackHandler)
+	if TLS {
 		err = http.ListenAndServeTLS(Address + ":" + Port, "tls/certFile.crt", "tls/keyFile.key", mux)
 	} else {
-		mux := http.NewServeMux()
-
-		mux.HandleFunc("/", handler)
 		err = http.ListenAndServe(Address + ":" + Port, mux)
 	}
 
 	if err != nil {
-		logger.LogCrash(err)
+		panic(err)
 	}
 
 	Server = WebServer{
-		Address: Address,
-		Port:	 Port,
-		TLS:	 TLS,
+		Address:  Address,
+		Port:	  Port,
+		TLS:	  TLS,
+		ServeMux: mux,
 	}
 
 	return Server
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	err := tpl.Execute(w, nil)
-	if err != nil {
-	    logger.LogCrash(err)
-	}
+	fmt.Fprintf(w, "{\"status\":\"alive\", \"app-name\": \"wtf.cxt.gobot\", \"app-description\": \"GoBot API Server\", \"version\":\"1.0\"}")
 }
